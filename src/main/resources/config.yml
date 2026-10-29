@@ -1,0 +1,136 @@
+# ============================================================
+#  TinyFish 配置文件  v2.0.0
+#  支持 1.13 ~ 26.x（同一个 jar）
+#  改完执行 /tf reload 生效（经济/投递模式的改动建议重启）
+# ============================================================
+
+fishing:
+  # ── 鱼获投递模式（重要）──────────────────────────────
+  # virtual = 钓到的鱼直接进「虚拟鱼箱」（默认）
+  #           玩家在 GUI 里查看/出售/投入收集箱。物品根本不存在 ⇒ 无法伪造，也不会吃背包。
+  #           代价：玩家之间不能交易鱼。
+  # item    = 生成带签名 lore 的真实物品进背包，可交易、可上架商店。
+  #           签名能挡住「改克重/改售价」，但挡不住 /give 复制（那属管理权限）。
+  # 两种模式可以随时切换，已有数据不会丢。
+  delivery: virtual
+
+  # ── 钓鱼加成 ─────────────────────────────────────────
+  # 公式结果按百分比计算，支持四则运算；装了 PlaceholderAPI 时还支持 %变量%。
+  # 例：speed-formula: "%vault_eco_balance% / 1000"（钱越多钓越快，上限自己控制）
+  speed-formula: "0"
+  multiplier-formula: "0"
+
+  # 手持鱼竿的 lore 也可以写加成，例如一行「钓鱼速度：50%」
+  # 注意：lore 是玩家可见文本，如需防伪造请配合签名物品或只用公式。
+  speed-lore-key: "钓鱼速度"
+  multiplier-lore-key: "钓鱼倍率"
+
+  # 上鱼速度上限倍率（1.0 = 不变，2.0 = 最快快一倍）。防止公式配错导致秒上鱼。
+  max-speed-multiplier: 3.0
+
+  # 每次成功的额外鱼获上限（0 = 只拿 1 条）
+  max-extra-catches: 5
+
+# ── 属性加成 ─────────────────────────────────────────────
+attributes:
+  # sink = 属性挂到哪里：
+  #   auto          = 装了 AttributePlus 就挂过去，否则只显示在 lore（默认）
+  #   attributeplus = 强制挂到 AttributePlus
+  #   lore          = 只在物品 lore 上显示，不影响实际数值
+  sink: auto
+
+  # 每种属性的总上限（多条鱼叠加后的封顶）。0 = 不限制。
+  # 建议保留上限：分档后满 5 种鱼约 +30，上限 50 留了余量。
+  max-total: 50
+
+  # ── 克重分档系数 ──
+  # 属性 = 单克属性 × 档位系数。分档是为了防止「一条大鱼属性爆表」。
+  # 老版本是「单克 × 克重」线性乘，一条 8000g 金枪鱼能给出 +48000 攻击力。
+  tiers:
+    - { max-weight: 499,     factor: 0.2 }
+    - { max-weight: 1499,    factor: 0.4 }
+    - { max-weight: 2999,    factor: 0.7 }
+    - { max-weight: 5999,    factor: 1.0 }
+    - { max-weight: 2147483647, factor: 1.5 }   # 最后一档必须兜住所有更大值
+
+# ── 鱼获物品显示 ─────────────────────────────────────────
+item:
+  # 没装 NeigeItems、或配置的 ni-item-id 不存在时，用这个原版材质
+  # 用材质名（字符串），不要写死成代码常量，保证跨版本可用
+  fallback-material: "COD"
+
+  # 是否给物品加发光（附魔光效）
+  glow: false
+
+  # lore 模板。变量：%weight% / %price% / %fish_id% / %fish_name%
+  weight-lore-format: "&7克重: &e%weight%g"
+  price-lore-format: "&7售价: &6%price%"
+  id-lore-format: "&8种类: %fish_id%"
+
+# ── 经济 ─────────────────────────────────────────────────
+economy:
+  # auto     = 先找自家 Economy，再找 Vault，都没有就用内置（默认）
+  # internal = 强制用内置经济（数据存 data.yml）
+  # own      = 强制用自家 Economy
+  # vault    = 强制用 Vault
+  provider: auto
+
+  currency-name: "金币"
+  money-scale: 2
+
+  internal:
+    # 玩家首次使用时的初始余额
+    starting-balance: 0.0
+    # 是否允许余额为负
+    allow-negative: false
+
+# ── 收集箱 ───────────────────────────────────────────────
+collection:
+  # 收集箱页数。每页 45 个槽位，每种鱼占一格。
+  # 鱼种超过 45 种时才需要调大。
+  pages: 1
+  # 投入收集箱后，再次打开 GUI 是否立即刷新属性
+  refresh-on-close: true
+
+# ── 排行榜 ───────────────────────────────────────────────
+leaderboard:
+  # 文字排行榜 /tf top 每页条数
+  page-size: 10
+  # 统计口径：best = 单条最大克重（默认） / total = 累计总克重
+  metric: best
+
+# ── 广播 ─────────────────────────────────────────────────
+broadcast:
+  enabled: true
+  # 达到该克重触发全服广播
+  minimum-weight: 3000
+  format: "&6[大鱼]&f %player% 钓到了 %fish_name% &f(&e%weight%g&f)"
+
+# ── 自动钓鱼 ─────────────────────────────────────────────
+auto-fishing:
+  enabled: true
+  # 是否需要主手持有鱼竿
+  require-fishing-rod: true
+  # 是否需要附近有水源
+  require-water-nearby: true
+  water-check-radius: 3
+  # 抛竿后等待上钩的最长时间（秒），超时自动重抛
+  bite-timeout-seconds: 45
+  # 上钩后延迟收杆（tick，20 = 1 秒）
+  reel-delay-ticks: 12
+  # 收杆后再次抛竿的延迟（tick）
+  recast-delay-ticks: 16
+  # 失败概率公式（百分比），支持四则运算与 PlaceholderAPI
+  fail-chance-formula: "15"
+  fail-message: "&c鱼脱钩了，这次什么也没钓到"
+  # 每次成功鱼获是否扣鱼竿耐久
+  damage-rod-per-catch: true
+  # 玩家退服/下线时自动停止
+  stop-on-quit: true
+
+# ── 安全 ─────────────────────────────────────────────────
+security:
+  # 物品签名密钥。仅 delivery: item 时使用。
+  # 首次启动会自动生成 64 位随机值，请勿外泄（视同后台密码）。
+  # 改了它 ⇒ 之前发出去的所有鱼物品全部失效（会被当成普通物品）。
+  secret: ""

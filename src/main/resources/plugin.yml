@@ -1,0 +1,44 @@
+name: TinyFish
+main: com.tinyaii.tinyfish.TinyFishPlugin
+version: 2.0.0
+
+# 1.13 是本插件的最低 API 世代。api-version 是「下限」语义，
+# 所以声明 1.13 在 1.13 ~ 26.x 的任意服务端上都会被接受。
+api-version: "1.13"
+
+author: TinyAII
+description: 自定义钓鱼 - 克重/鱼获收集/属性加成/自动钓鱼（单 jar 支持 1.13~26.x）
+
+# 全部为软依赖：没装就自动降级，插件照常启动。
+softdepend:
+  - AttributePlus
+  - NeigeItems
+  - PlaceholderAPI
+  - Vault
+  - Economy
+
+commands:
+  tf:
+    description: TinyFish 主命令
+    usage: /tf help
+    aliases: [tinyfish, 钓鱼]
+
+permissions:
+  tinyfish.use:
+    description: 基础使用（钓鱼、开鱼箱）
+    default: true
+  tinyfish.sell:
+    description: 出售鱼获
+    default: true
+  tinyfish.collect:
+    description: 使用鱼获收集箱（投入 / 取回 / 查看属性）
+    default: true
+  tinyfish.top:
+    description: 查看排行榜
+    default: true
+  tinyfish.auto:
+    description: 使用自动钓鱼
+    default: true
+  tinyfish.admin:
+    description: 管理（重载配置、发放鱼获、查看他人数据）
+    default: op

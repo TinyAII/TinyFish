@@ -1,0 +1,108 @@
+# ============================================================
+#  TinyFish 鱼获配置  v2.0.0
+#
+#  每个 fish 节点 = 一种可钓到的鱼。节点名就是 fish_id。
+#
+#  ── 字段说明 ────────────────────────────────────────────
+#  ni-item-id         NeigeItems 物品 ID（可选）。没装 NeigeItems 或 ID 不存在时
+#                     回落到 fallback-material。
+#  display-name       显示名，支持 & 颜色码。
+#  chance             抽取权重。总和不必等于 100 —— 会按总和归一化。
+#  min-weight/max-weight  克重区间（含两端）。
+#  base-price         基础价。
+#  price-per-gram     每克加价。售价 = base-price + price-per-gram × 克重。
+#  fallback-material  没装 NeigeItems 时用的原版材质名（字符串）。
+#  lore               额外显示的 lore 行。
+#  collect-attribute  投入收集箱后提供的属性，格式「属性名+数值」或「属性名+百分比%」。
+#                     ⚠️ 实际生效值 = 这里的数值 × 克重档位系数（见 config.yml 的 attributes.tiers）
+#                     例：金枪鱼写「攻击力+6」，钓到 8000g 时实际是 6 × 1.5 = +9
+#  command            钓上后逐条判断是否执行，格式 "'控制台指令' 概率"，概率 0-100。
+#  weight             钓上后按权重随机抽一条执行，格式 "'控制台指令' 权重"。
+#
+#  ── 可用变量 ────────────────────────────────────────────
+#  %player_name% / %player%   玩家名
+#  %fish_id%                  鱼配置 ID
+#  %fish_name%                鱼显示名
+#  %weight%                   本次克重
+#  %price%                    本次售价
+#
+#  ⚠️ 下面的价格是「保守默认值」，请按你自己服的经济水平调整。
+#     默认下 单次鱼获收益约 1 ~ 170 金币。
+# ============================================================
+
+fish:
+
+  carp:
+    ni-item-id: "fish_carp"
+    display-name: "&f鲤鱼"
+    chance: 35
+    min-weight: 300
+    max-weight: 1800
+    base-price: 1.0
+    price-per-gram: 0.005
+    fallback-material: "COD"
+    lore:
+      - "&7放置到收集箱可获得属性"
+    collect-attribute:
+      - "生命上限+3"
+
+  salmon:
+    ni-item-id: "fish_salmon"
+    display-name: "&d鲑鱼"
+    chance: 25
+    min-weight: 500
+    max-weight: 2400
+    base-price: 2.0
+    price-per-gram: 0.008
+    fallback-material: "SALMON"
+    lore:
+      - "&7放置到收集箱可获得属性"
+    collect-attribute:
+      - "攻击力+2"
+
+  catfish:
+    ni-item-id: "fish_catfish"
+    display-name: "&7鲶鱼"
+    chance: 20
+    min-weight: 800
+    max-weight: 4200
+    base-price: 3.0
+    price-per-gram: 0.010
+    fallback-material: "TROPICAL_FISH"
+    lore:
+      - "&7放置到收集箱可获得属性"
+    collect-attribute:
+      - "生命上限+5"
+
+  koi:
+    ni-item-id: "fish_koi"
+    display-name: "&6锦鲤"
+    chance: 12
+    min-weight: 600
+    max-weight: 3200
+    base-price: 5.0
+    price-per-gram: 0.015
+    fallback-material: "PUFFERFISH"
+    lore:
+      - "&7放置到收集箱可获得属性"
+      - "&8祥瑞之兆"
+    collect-attribute:
+      - "攻击加成+1%"
+      - "生命加成+1%"
+
+  tuna:
+    ni-item-id: "fish_tuna"
+    display-name: "&b金枪鱼"
+    chance: 8
+    min-weight: 2000
+    max-weight: 8000
+    base-price: 10.0
+    price-per-gram: 0.020
+    fallback-material: "SALMON"
+    lore:
+      - "&7放置到收集箱可获得属性"
+    collect-attribute:
+      - "攻击力+6"
+    # 示例：钓到金枪鱼时 100% 执行一条提示，另有 20% 概率额外再提示一次
+    command:
+      - "'say %player_name% 钓到了 %fish_name% %weight%g' 100"
