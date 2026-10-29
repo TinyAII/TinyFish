@@ -19,6 +19,7 @@ import com.tinyaii.tinyfish.service.AutoFishingService;
 import com.tinyaii.tinyfish.service.CollectionService;
 import com.tinyaii.tinyfish.service.LeaderboardService;
 import com.tinyaii.tinyfish.service.PlayerDataStore;
+import com.tinyaii.tinyfish.service.UpdateChecker;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -49,6 +50,7 @@ public final class TinyFishPlugin extends JavaPlugin {
     private LeaderboardService leaderboardService;
     private GuiListener guiListener;
     private AutoFishingService autoFishingService;
+    private UpdateChecker updateChecker;
 
     @Override
     public void onEnable() {
@@ -80,10 +82,13 @@ public final class TinyFishPlugin extends JavaPlugin {
         autoFishingService = new AutoFishingService(this, configManager, fishService);
         autoFishingService.start();
 
+        updateChecker = new UpdateChecker(this, configManager);
+        updateChecker.start();
+
         getServer().getPluginManager().registerEvents(
                 new FishingListener(fishService, autoFishingService), this);
         getServer().getPluginManager().registerEvents(
-                new PlayerStateListener(this, collectionService, autoFishingService), this);
+                new PlayerStateListener(this, collectionService, autoFishingService, updateChecker), this);
         getServer().getPluginManager().registerEvents(guiListener, this);
 
         PluginCommand command = getCommand("tf");
@@ -103,6 +108,9 @@ public final class TinyFishPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (updateChecker != null) {
+            updateChecker.stop();
+        }
         if (autoFishingService != null) {
             autoFishingService.stop();
         }
@@ -159,9 +167,27 @@ public final class TinyFishPlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * 当前生效的插件版本。
+     *
+     * <p>故意读 plugin.yml 而不是用常量：常量容易和实际发布的版本号不同步，
+     * 而版本检查拿的就是这个值 —— 报错了会误导服主。
+     */
+    public String currentVersion() {
+        try {
+            String v = getDescription().getVersion();
+            if (v != null && !v.trim().isEmpty()) {
+                return v.trim();
+            }
+        } catch (Throwable ignored) {
+            // 极新核心可能移除该方法，回落到常量
+        }
+        return VERSION;
+    }
+
     private void printBanner() {
         getLogger().info("========================================");
-        getLogger().info(" TinyFish v" + VERSION + " —— 自定义钓鱼");
+        getLogger().info(" TinyFish v" + currentVersion() + " —— 自定义钓鱼");
         getLogger().info(" 支持范围: 1.13 ~ 26.x（Java 8 字节码, api-version 1.13）");
         getLogger().info(" 投递模式: " + configManager.getDelivery()
                 + ("virtual".equals(configManager.getDelivery())

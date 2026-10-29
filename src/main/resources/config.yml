@@ -134,3 +134,18 @@ security:
   # 首次启动会自动生成 64 位随机值，请勿外泄（视同后台密码）。
   # 改了它 ⇒ 之前发出去的所有鱼物品全部失效（会被当成普通物品）。
   secret: ""
+
+# ── 在线更新检查 ─────────────────────────────────────────
+# 启动后异步查一次有没有新版本。失败静默、不拖慢启动。
+# 注意：本插件只做「提示」，不会自动下载或替换 jar —— 替换需要你自己来。
+update-check:
+  enabled: true
+  endpoint: "https://bump.tinyaii.cn"
+  app-key: "app_dcb01c804910adade6c5812d"
+  channel: "stable"
+  # 单次请求超时（秒）。服务器连不上外网时最多卡这么久，且是在异步线程里。
+  timeout-seconds: 3
+  # 每隔多少小时检查一次（0 按 1 处理）
+  interval-hours: 6
+  # 拥有该权限的玩家上线时会收到「有新版本」提示
+  notify-permission: "tinyfish.admin"

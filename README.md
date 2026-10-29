@@ -156,6 +156,34 @@ economy:
 
 ---
 
+## 在线更新检查
+
+启动后 5 秒会异步查一次有没有新版本（BumpAPI）。
+
+```yaml
+update-check:
+  enabled: true
+  endpoint: "https://bump.tinyaii.cn"
+  app-key: "app_dcb01c804910adade6c5812d"   # 公开标识，不是密钥
+  channel: "stable"
+  timeout-seconds: 3
+  interval-hours: 6
+  notify-permission: "tinyfish.admin"
+```
+
+**三条保证**：
+
+1. **只提示，不下载、不替换 jar** —— 换 jar 必须你自己来
+2. **失败静默** —— 服务器连不上外网时最多等 3 秒（在异步线程里），不会影响启动，也不会刷屏报错
+3. **完全可关** —— `enabled: false` 就彻底不联网
+
+有更新时，控制台会打印版本号和更新说明；有 `tinyfish.admin` 权限的玩家上线时会收到一条提示。
+
+> `app-key` 是应用的公开标识（客户端本来就要带它查询），**不是密钥**，
+> 所以它可以放心出现在 jar 和配置里。真正的 `bp_` API 密钥只用于发布，不会进插件。
+
+---
+
 ## 常见问题
 
 **Q：`/tf gui` 没反应 / 界面是空的**

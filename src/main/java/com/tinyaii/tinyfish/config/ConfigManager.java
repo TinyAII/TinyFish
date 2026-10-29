@@ -10,6 +10,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,6 +25,10 @@ import java.util.Map;
  * 业务代码不直接读 FileConfiguration（避免每个 tick 都查配置）。
  */
 public final class ConfigManager {
+
+    /** 版本检查服务的默认地址与 app_key（公开标识，不是密钥）。 */
+    private static final String DEFAULT_UPDATE_ENDPOINT = "https://bump.tinyaii.cn";
+    private static final String DEFAULT_APP_KEY = "app_dcb01c804910adade6c5812d";
 
     private final TinyFishPlugin plugin;
 
@@ -70,6 +77,14 @@ public final class ConfigManager {
     private String failMessage = "&c鱼脱钩了，这次什么也没钓到";
     private boolean damageRodPerCatch = true;
     private boolean stopOnQuit = true;
+    // 在线更新检查
+    private boolean updateCheckEnabled = true;
+    private String updateEndpoint = "https://bump.tinyaii.cn";
+    private String updateAppKey = "";
+    private String updateChannel = "stable";
+    private int updateTimeoutSeconds = 3;
+    private int updateIntervalHours = 6;
+    private String updateNotifyPermission = "tinyfish.admin";
 
     private FishCodec codec;
     private List<FishDefinition> fishDefinitions = Collections.emptyList();
@@ -82,6 +97,7 @@ public final class ConfigManager {
 
     public void reload() {
         plugin.reloadConfig();
+        applyBundledDefaults();
         FileConfiguration c = plugin.getConfig();
 
         delivery = lower(c.getString("fishing.delivery", "virtual"), "virtual");
@@ -131,9 +147,56 @@ public final class ConfigManager {
         damageRodPerCatch = c.getBoolean("auto-fishing.damage-rod-per-catch", true);
         stopOnQuit = c.getBoolean("auto-fishing.stop-on-quit", true);
 
+        updateCheckEnabled = c.getBoolean("update-check.enabled", true);
+        updateEndpoint = c.getString("update-check.endpoint", DEFAULT_UPDATE_ENDPOINT);
+        updateAppKey = c.getString("update-check.app-key", "");
+        // 老版本升级上来的 config.yml 没有 update-check 段；
+        // 实测 Paper 26.3 上 setDefaults 兜不住（reloadConfig 内部行为有差异），
+        // 所以这里再做一层硬兜底 —— app_key 不是密钥，写死在代码里没有安全风险。
+        if (updateAppKey == null || updateAppKey.trim().isEmpty()) {
+            updateAppKey = DEFAULT_APP_KEY;
+        }
+        updateChannel = c.getString("update-check.channel", "stable");
+        updateTimeoutSeconds = Math.max(1, c.getInt("update-check.timeout-seconds", 3));
+        updateIntervalHours = Math.max(1, c.getInt("update-check.interval-hours", 6));
+        updateNotifyPermission = c.getString("update-check.notify-permission", "tinyfish.admin");
+
         codec = new FishCodec(ensureSecret(c));
 
         reloadFish();
+    }
+
+    /**
+     * 用 jar 内置的 config.yml 当默认值兜底。
+     *
+     * <p>为什么需要：老版本升级上来时，磁盘上的 config.yml 不会有新增的配置段
+     * （Bukkit 的 saveDefaultConfig 只在文件不存在时才写）。
+     * 没有这层兜底，新加的 update-check 段就会「读不到」。
+     *
+     * <p>用 {@code setDefaults} 而不是 {@code options().copyDefaults(true) + saveConfig()}：
+     * 后者会把整份文件的注释全部吃掉，这份配置的注释是写给服主看的。
+     */
+    private void applyBundledDefaults() {
+        InputStream resource = null;
+        try {
+            resource = plugin.getResource("config.yml");
+            if (resource == null) {
+                return;
+            }
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(resource, StandardCharsets.UTF_8));
+            plugin.getConfig().setDefaults(defaults);
+        } catch (Throwable t) {
+            plugin.getLogger().warning("读取内置默认配置失败: " + t.getMessage());
+        } finally {
+            if (resource != null) {
+                try {
+                    resource.close();
+                } catch (Exception ignored) {
+                    // 关闭失败无所谓
+                }
+            }
+        }
     }
 
     /** 密钥为空时生成一个并写回 config.yml（只改那一行，保留注释）。 */
@@ -285,6 +348,13 @@ public final class ConfigManager {
     public String getFailMessage() { return failMessage; }
     public boolean isDamageRodPerCatch() { return damageRodPerCatch; }
     public boolean isStopOnQuitEnabled() { return stopOnQuit; }
+    public boolean isUpdateCheckEnabled() { return updateCheckEnabled; }
+    public String getUpdateEndpoint() { return updateEndpoint; }
+    public String getUpdateAppKey() { return updateAppKey; }
+    public String getUpdateChannel() { return updateChannel; }
+    public int getUpdateTimeoutSeconds() { return updateTimeoutSeconds; }
+    public int getUpdateIntervalHours() { return updateIntervalHours; }
+    public String getUpdateNotifyPermission() { return updateNotifyPermission; }
     public FishCodec getCodec() { return codec; }
     public List<FishDefinition> getFishDefinitions() { return fishDefinitions; }
 }
